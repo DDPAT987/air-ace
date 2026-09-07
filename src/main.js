@@ -269,9 +269,19 @@ async function boot() {
     } catch (err) {
       console.warn('[boot] 地形加载失败，使用占位地面:', err.message);
     }
-    // 真实飞机/导弹模型（失败回退占位网格）
+    // 真实飞机/导弹模型（失败/超时回退占位网格；网络僵死可手动跳过）
     try {
-      await modelLib.loadAll((f, m) => setProgress(0.6 + f * 0.35, m));
+      const skipTimer = setTimeout(() => {
+        const a = document.createElement('a');
+        a.textContent = '网络慢？跳过剩余模型，直接开始';
+        a.href = 'javascript:void(0)';
+        a.style.cssText = 'color:#ffd24d;margin-left:10px;text-decoration:underline;cursor:pointer';
+        a.onclick = () => { modelLib.skipRemaining(); a.remove(); };
+        loadMsg.appendChild(a);
+      }, 10000);
+      try {
+        await modelLib.loadAll((f, m) => setProgress(0.6 + f * 0.35, m));
+      } finally { clearTimeout(skipTimer); }
       game.modelLib = modelLib;
     } catch (err) {
       console.warn('[boot] 模型库加载失败，使用占位网格:', err.message);

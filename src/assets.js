@@ -80,21 +80,53 @@ export class ModelLibrary {
     this.models = {};
   }
 
+  // 外部调用：跳过剩余模型（网络僵死时让玩家直接进游戏，用占位网格）
+  skipRemaining() {
+    this._skipRequested = true;
+    if (this._skipResolve) this._skipResolve();
+  }
+
   async loadAll(onProgress = () => {}) {
     const names = Object.keys(REGISTRY);
     let i = 0;
     for (const name of names) {
-      try {
-        this.models[name] = await this._loadOne(REGISTRY[name]);
-        console.log(`[assets] ${name} loaded ✓`);
-      } catch (err) {
-        console.warn(`[assets] ${name} 加载失败，使用占位模型:`, err.message);
+      if (this._skipRequested) {
+        this.models[name] = this.models[name] ?? null;
+        i++;
+        onProgress(i / names.length, `跳过 ${name} (${i}/${names.length})`);
+        continue;
+      }
+      // 每个模型最多 2 次尝试，单次 45s 超时；期间可被 skipRemaining() 打断
+      let ok = false;
+      for (let attempt = 1; attempt <= 2 && !ok && !this._skipRequested; attempt++) {
+        try {
+          this.models[name] = await this._loadWithTimeout(REGISTRY[name], 45000);
+          ok = true;
+          console.log(`[assets] ${name} loaded ✓${attempt > 1 ? ` (retry ${attempt})` : ''}`);
+        } catch (err) {
+          console.warn(`[assets] ${name} 第 ${attempt} 次尝试失败: ${err.message}`);
+        }
+      }
+      if (!ok) {
         this.models[name] = null;
+        if (!this._skipRequested) console.warn(`[assets] ${name} 使用占位模型`);
       }
       i++;
       onProgress(i / names.length, `模型 ${name} (${i}/${names.length})`);
     }
     return this;
+  }
+
+  _loadWithTimeout(entry, ms) {
+    let skipReject;
+    this._skipResolve = () => skipReject(new Error('skipped'));
+    return Promise.race([
+      this._loadOne(entry),
+      new Promise((_, rej) => {
+        skipReject = rej;
+        setTimeout(() => rej(new Error(`timeout ${ms}ms`)), ms);
+      }),
+    ]).finally(() => { this._skipResolve = null; });
   }
 
   async _loadOne(entry) {

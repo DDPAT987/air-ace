@@ -87,6 +87,27 @@
   .optrow input[type="range"] { width: 220px; accent-color: #4db8ff; }
   .hint { margin-top: 10px; font-size: 11px; color: #4f7c99; }
 
+  /* ---------- 暂停菜单 ---------- */
+  #pausescreen {
+    position: fixed; inset: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(6, 10, 16, 0.72);
+  }
+  #pausescreen.hidden { display: none; }
+  #pausescreen .panel {
+    text-align: center; padding: 30px 48px; border: 1px solid #2f6d9d88; border-radius: 10px;
+    background: #0c1824e6; box-shadow: 0 0 40px #2f9dff22;
+  }
+  #pausescreen h3 { margin: 0 0 16px; font-size: 26px; letter-spacing: 10px; color: #9fd6ff; text-shadow: 0 0 14px #2f9dff88; }
+  #pausescreen button {
+    display: block; width: 300px; margin: 8px auto; padding: 10px 0; font-family: inherit;
+    font-size: 14px; letter-spacing: 3px; border-radius: 5px; cursor: pointer;
+    color: #dff3ff; background: #14384fd9; border: 1px solid #4db8ff;
+  }
+  #pausescreen button:hover { background: #1d5073; }
+  #pausescreen #btnPauseMenu { color: #9fb8c8; background: transparent; border: 1px solid #4d6d8d88; }
+  #pausescreen #btnPauseMenu:hover { border-color: #9fd6ff; color: #eaffff; }
+
   /* ---------- 死亡界面 ---------- */
   #deathscreen {
     position: fixed; inset: 0; z-index: 20;
