@@ -1,0 +1,135 @@
+newmtl aa3043f2-6ce8-49dc-b5c1-62542c2ea730
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/f_16c_block_52_aesa_c.jpg
+map_Ks textures/f_16c_block_52_aesa_n_s.jpg
+map_normal textures/f_16c_block_52_aesa_n_n.jpg
+map_ao textures/f_16c_block_52_aesa_n_ao.jpg
+
+newmtl c50a0f4a-1fb5-4d8d-8e3d-1f25046d2f07
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/f_16c_block_52_aesa_interior_c.jpg
+map_Ks textures/f_16c_block_52_aesa_interior_n_s.jpg
+map_normal textures/f_16c_block_52_aesa_interior_n_n.jpg
+map_ao textures/f_16c_block_52_aesa_interior_n_ao.jpg
+
+newmtl 6da910ff-c78d-431a-afbb-b6af00884a32
+Kd 0.000 0.000 0.000
+Ks 1.000 1.000 1.000
+Ns 255
+Ke 0.000 0.000 0.000
+d 0.17
+
+newmtl ce29dce6-8bf3-44ae-bd42-2fbffb5f564a
+Kd 0.000 0.000 0.000
+Ks 1.000 1.000 1.000
+Ns 255
+Ke 0.000 0.000 0.000
+d 0.17
+
+newmtl ade31792-8538-4716-a4fa-3159017f7aa6
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/f_16c_block_50_inside_c.jpg
+map_Ks textures/f_16c_block_50_inside_n_s.jpg
+map_normal textures/f_16c_block_50_inside_n_n.jpg
+map_ao textures/f_16c_block_50_inside_n_ao.jpg
+
+newmtl 8e04dddc-459e-4ea8-b203-7d13b0a24c42
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/f_16a_block_10_lattice_c.jpg
+map_Ks textures/f_16a_block_10_lattice_n_s.jpg
+map_normal textures/f_16a_block_10_lattice_n_n.jpg
+map_ao textures/f_16a_block_10_lattice_n_ao.jpg
+
+newmtl ad5978a6-7091-46cd-8fd0-23eea10f45c8
+Kd 0.000 0.282 0.302
+Ks 0.000 0.000 0.000
+Ns 255
+Ke 0.000 0.000 0.000
+d 0.75
+
+newmtl dc7d0422-8342-4244-972a-de34f463f935
+Kd 0.459 0.000 0.000
+Ks 0.000 0.000 0.000
+Ns 255
+Ke 0.000 0.000 0.000
+d 0.75
+
+newmtl 046c9b93-b579-4d32-8691-5ca18b379b59
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/f_16c_seat_c.jpg
+map_Ks textures/f_16c_seat_n_s.jpg
+map_normal textures/f_16c_seat_n_n.jpg
+map_ao textures/f_16c_seat_n_ao.jpg
+
+newmtl e3d8d11f-2cb5-4edb-bf63-1211d95f1cba
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/f_16a_block_10_launcher_aim9_c.jpg
+map_Ks textures/f_16a_block_10_launcher_aim9_n_s.jpg
+map_normal textures/f_16a_block_10_launcher_aim9_n_n.jpg
+map_ao textures/f_16a_block_10_launcher_aim9_n_ao.jpg
+
+newmtl 297b6336-1678-464a-a1ee-ab9a11b3ce3b
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/us_370gal_drop_tank_c.jpg
+map_Ks textures/us_370gal_drop_tank_n_s.jpg
+map_normal textures/us_370gal_drop_tank_n_n.jpg
+map_ao textures/us_370gal_drop_tank_n_ao.jpg
+
+newmtl e46f97e9-8dd4-4848-841e-5a5b77876b3c
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/us_300gal_drop_tank_with_f_16_fuse_pylon_c.jpg
+map_Ks textures/us_300gal_drop_tank_with_f_16_fuse_pylon_n_s.jpg
+map_normal textures/us_300gal_drop_tank_with_f_16_fuse_pylon_n_n.jpg
+map_ao textures/us_300gal_drop_tank_with_f_16_fuse_pylon_n_ao.jpg
+
+newmtl 192de6d1-f56f-4742-b800-50e510d374df
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/f_16c_block_52_drop_tank_pylon_c.jpg
+map_Ks textures/f_16c_block_52_drop_tank_pylon_n_s.jpg
+map_normal textures/f_16c_block_52_drop_tank_pylon_n_n.jpg
+map_ao textures/f_16c_block_52_drop_tank_pylon_n_ao.jpg
+
+newmtl aff3497d-d9cf-453b-85b8-01d68db99995
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/us_300gal_drop_tank_aesa_c.jpg
+map_Ks textures/us_300gal_drop_tank_with_f_16_fuse_pylon_n_s.jpg
+map_normal textures/us_300gal_drop_tank_with_f_16_fuse_pylon_n_n.jpg
+map_ao textures/us_300gal_drop_tank_with_f_16_fuse_pylon_n_ao.jpg
+
+newmtl 0e25b70d-df67-4d1e-b518-3486009e05d8
+Kd 1.000 1.000 0.863
+Ks 0.000 0.000 0.000
+Ns 255
+Ke 0.000 0.000 0.000
+d 0.1
+

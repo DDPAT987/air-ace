@@ -1,0 +1,18 @@
+{
+  "zoom": 11,
+  "satZoom": 12,
+  "x0": 1713,
+  "x1": 1717,
+  "y0": 881,
+  "y1": 885,
+  "bbox": {
+    "lonMin": 121.2,
+    "latMin": 23.65,
+    "lonMax": 121.85,
+    "latMax": 24.25
+  },
+  "tileSize": 256,
+  "elevationEncoding": "terrarium",
+  "imagery": "Esri World Imagery",
+  "note": "elev(m) = R*256 + G + B/256 - 32768"
+}

@@ -1,0 +1,10 @@
+newmtl ec09193d-e38b-4cc4-800d-c18f072796d9
+Kd 1.000 1.000 1.000
+Ks 0.502 0.502 0.502
+Ns 30
+Ke 0.000 0.000 0.000
+map_Kd textures/us_aim_120a_missile_c.jpg
+map_Ks textures/us_aim_120_missile_n_s.jpg
+map_normal textures/us_aim_120_missile_n_n.jpg
+map_ao textures/us_aim_120_missile_n_ao.jpg
+

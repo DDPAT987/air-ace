@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="favicon.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>苍穹王牌 · Air Ace</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: #0a0e14;
+    font-family: "Consolas", "Courier New", monospace;
+  }
+  #gl, #hud { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #hud { pointer-events: none; }
+
+  /* ---------- 主菜单 ---------- */
+  #overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, #14202e 0%, #060a10 78%);
+    color: #9fd6ff; text-align: center; user-select: none;
+    overflow-y: auto; padding: 24px 0;
+  }
+  #overlay h1 { font-size: 40px; letter-spacing: 12px; margin: 0 0 6px; color: #cfeaff; text-shadow: 0 0 18px #2f9dff; }
+  #overlay h2 { font-size: 13px; font-weight: normal; letter-spacing: 4px; color: #5f8ea8; margin: 0 0 18px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; }
+  .tabs button {
+    font-family: inherit; font-size: 14px; letter-spacing: 3px; padding: 8px 22px;
+    color: #8fc8ec; background: #10222fd9; border: 1px solid #2f6d9d66; border-radius: 4px; cursor: pointer;
+  }
+  .tabs button:hover { background: #173b52; }
+  .tabs button.active { color: #eaffff; border-color: #6fe3ff; background: #17475f; box-shadow: 0 0 12px #2f9dff55; }
+  .tabpane { width: 640px; max-width: 92vw; }
+  .tabpane.hidden { display: none; }
+  .mission-brief { font-size: 13px; color: #7ab8d8; line-height: 1.9; margin-bottom: 14px; letter-spacing: 1px; }
+  .progress { width: 420px; max-width: 80vw; height: 18px; border: 1px solid #2f9dff55; border-radius: 4px; overflow: hidden; margin: 0 auto; }
+  .progress .bar { height: 100%; width: 0%; background: linear-gradient(90deg, #1c6dd0, #6fe3ff); transition: width .15s; }
+  .msg { margin-top: 10px; font-size: 12px; color: #7ab8d8; min-height: 16px; }
+  .startbtn {
+    margin-top: 18px; padding: 12px 46px; font-size: 18px; letter-spacing: 8px;
+    font-family: inherit; color: #dff3ff; background: #14384fd9; border: 1px solid #4db8ff;
+    border-radius: 6px; cursor: pointer;
+  }
+  .startbtn:hover { background: #1d5073; box-shadow: 0 0 22px #2f9dff88; }
+  .startbtn:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+  .keys { margin-top: 16px; font-size: 12px; line-height: 1.9; color: #4f7c99; letter-spacing: 1px; }
+  .keys b { color: #8fc8ec; font-weight: normal; }
+
+  /* 键位表 */
+  .keylist { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 22px; text-align: left; }
+  .keyrow { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 5px 8px; border-bottom: 1px solid #1b3a4d; font-size: 12px; }
+  .keyrow .label { color: #8fc8ec; }
+  .keybtn {
+    font-family: inherit; min-width: 96px; padding: 4px 10px; font-size: 12px;
+    color: #dff3ff; background: #10222fd9; border: 1px solid #2f6d9d88; border-radius: 3px; cursor: pointer;
+  }
+  .keybtn:hover { border-color: #6fe3ff; }
+  .keybtn.listening { color: #ffd24d; border-color: #ffd24d; animation: blink 0.9s infinite; }
+  @keyframes blink { 50% { opacity: 0.4; } }
+  .row { margin-top: 12px; display: flex; gap: 12px; justify-content: center; }
+  .smallbtn {
+    font-family: inherit; font-size: 12px; padding: 6px 18px; letter-spacing: 2px;
+    color: #9fd6ff; background: transparent; border: 1px solid #2f6d9d88; border-radius: 4px; cursor: pointer;
+  }
+  .smallbtn:hover { border-color: #6fe3ff; color: #eaffff; }
+
+  /* 机体选择 */
+  .acgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .accard {
+    text-align: left; padding: 10px 12px; border: 1px solid #2f6d9d66; border-radius: 6px;
+    background: #0e1e2bd9; cursor: pointer; font-size: 11px; color: #7ab8d8; line-height: 1.75;
+  }
+  .accard:hover { border-color: #4db8ff; }
+  .accard.selected { border-color: #6fe3ff; box-shadow: 0 0 14px #2f9dff55; background: #14384f; }
+  .accard .acname { font-size: 14px; color: #cfeaff; letter-spacing: 2px; }
+  .sliders { text-align: left; }
+  .slider-row { display: flex; align-items: center; gap: 10px; padding: 4px 2px; font-size: 12px; color: #8fc8ec; }
+  .slider-row label { width: 130px; }
+  .slider-row input[type="range"] { flex: 1; accent-color: #4db8ff; }
+  .slider-row .val { width: 52px; text-align: right; color: #cfeaff; }
+
+  /* 系统设置 */
+  .optrow { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 13px; color: #8fc8ec; text-align: left; }
+  .optrow input[type="checkbox"] { accent-color: #4db8ff; width: 16px; height: 16px; }
+  .optrow input[type="range"] { width: 220px; accent-color: #4db8ff; }
+  .hint { margin-top: 10px; font-size: 11px; color: #4f7c99; }
+
+  /* ---------- 死亡界面 ---------- */
+  #deathscreen {
+    position: fixed; inset: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(60,10,10,0.45), rgba(6,8,12,0.82));
+  }
+  #deathscreen.hidden { display: none; }
+  #deathscreen .panel {
+    text-align: center; padding: 36px 56px; border: 1px solid #a0404088; border-radius: 10px;
+    background: #140c0ed9; box-shadow: 0 0 40px #ff5d5d33;
+  }
+  #deathscreen h3 { margin: 0 0 18px; font-size: 34px; letter-spacing: 10px; color: #ff5d5d; text-shadow: 0 0 18px #ff5d5d88; }
+  #deathstats { font-size: 14px; color: #cfeaff; line-height: 2.1; margin-bottom: 22px; }
+  #deathstats b { color: #ffd24d; font-weight: normal; }
+  #deathscreen button {
+    display: block; width: 260px; margin: 8px auto; padding: 11px 0; font-family: inherit;
+    font-size: 15px; letter-spacing: 5px; border-radius: 5px; cursor: pointer;
+  }
+  #btnRestart { color: #dff3ff; background: #14384fd9; border: 1px solid #4db8ff; }
+  #btnRestart:hover { background: #1d5073; box-shadow: 0 0 18px #2f9dff88; }
+  #btnMenu { color: #9fb8c8; background: transparent; border: 1px solid #4d6d8d88; }
+  #btnMenu:hover { border-color: #9fd6ff; color: #eaffff; }
+
+  /* 暂停角标 */
+  #pauseTag {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 15;
+    padding: 6px 22px; font-size: 13px; letter-spacing: 4px; color: #ffd24d;
+    background: #10222fd9; border: 1px solid #ffd24d66; border-radius: 4px; pointer-events: none;
+  }
+  #pauseTag.hidden { display: none; }
+</style>
+<!-- three.js 通过 import map 从本地 node_modules 提供 -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "./node_modules/three/build/three.module.js",
+    "three/addons/": "./node_modules/three/examples/jsm/",
+    "fflate": "./node_modules/fflate/esm/browser.js"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="hud"></canvas>
+
+<div id="overlay">
+  <h1>AIR ACE</h1>
+  <h2>苍穹王牌 · 第三人称空战</h2>
+  <div class="tabs">
+    <button class="tab active" data-tab="start">出 击</button>
+    <button class="tab" data-tab="keys">按键设置</button>
+    <button class="tab" data-tab="aircraft">机体设置</button>
+    <button class="tab" data-tab="system">系统设置</button>
+  </div>
+
+  <div class="tabpane" id="tab-start">
+    <div class="mission-brief">花莲空域 · 中央山脉前线<br>拦截来袭机群，善用热诱弹与箔条规避导弹，守住海岸线</div>
+    <div class="progress"><div class="bar" id="loadbar"></div></div>
+    <div class="msg" id="loadmsg">初始化引擎…</div>
+    <button class="startbtn" id="startbtn" disabled>开 始 任 务</button>
+    <div class="keys" id="keysHint">
+      <b>W/S</b> 俯仰（W低头 S抬头） · <b>A/D</b> 滚转 · <b>Q/E</b> 偏航 · <b>鼠标</b> 辅助飞控（PID）<br>
+      按住 <b>C</b> 自由视角 · <b>左键</b> 航炮 · <b>空格/右键</b> 导弹 · <b>Tab</b> 切换目标 · <b>F</b> 热诱弹 · <b>X</b> 箔条 · <b>P</b> 暂停
+    </div>
+  </div>
+
+  <div class="tabpane hidden" id="tab-keys">
+    <div class="keylist" id="keylist"></div>
+    <div class="row"><button class="smallbtn" id="keysReset">恢复默认按键</button></div>
+    <div class="hint">点击右侧按键后按下新按键即可重绑（Esc 取消）；航炮固定为鼠标左键</div>
+  </div>
+
+  <div class="tabpane hidden" id="tab-aircraft">
+    <div class="acgrid" id="acgrid"></div>
+    <div class="sliders" id="acsliders"></div>
+    <div class="row"><button class="smallbtn" id="acReset">恢复默认参数</button></div>
+    <div class="hint">参数在任务开始时生效；重量影响转弯率，升力影响失速速度，推力影响极速与爬升</div>
+  </div>
+
+  <div class="tabpane hidden" id="tab-system">
+    <div class="optrow"><label>雷达距离</label><input type="range" id="optRadarRange" min="5" max="40" step="1"><span id="optRadarRangeVal" style="color:#cfeaff"></span></div>
+    <div class="optrow"><label>雷达水平范围</label><input type="range" id="optRadarScan" min="60" max="120" step="5"><span id="optRadarScanVal" style="color:#cfeaff"></span></div>
+    <div class="optrow" style="color:#8ab4d8;font-size:12px">锁定目标（Tab）需同时在雷达距离与机头±水平扫描角内</div>
+    <div class="optrow"><label>鼠标灵敏度</label><input type="range" id="optSens" min="0.3" max="2.5" step="0.1"><span id="optSensVal" style="color:#cfeaff"></span></div>
+    <div class="optrow" style="color:#8ab4d8;font-size:12px">鼠标飞控圆环：机头追逐圆环方向，键盘始终优先</div>
+    <div class="optrow"><label style="width:100%"><input type="checkbox" id="optShake"> 相机抖动特效（高过载/爆炸/加力）</label></div>
+    <div class="hint">所有设置自动保存在浏览器本地，刷新后保留</div>
+  </div>
+</div>
+
+<div id="deathscreen" class="hidden">
+  <div class="panel">
+    <h3>机 体 损 毁</h3>
+    <div id="deathstats"></div>
+    <button id="btnRestart">重新出击 · ENTER</button>
+    <button id="btnMenu">返回主菜单</button>
+  </div>
+</div>
+
+<div id="pausescreen" class="hidden">
+  <div class="panel">
+    <h3>暂 停</h3>
+    <button id="btnResume">继续飞行 · ESC/P</button>
+    <button id="btnPauseSettings">更改配置…（键位 / 机体 / 系统）</button>
+    <button id="btnPauseRestart">重新出击</button>
+    <button id="btnPauseMenu">退出任务 · 返回主菜单</button>
+  </div>
+</div>
+
+<div id="pauseTag" class="hidden">已暂停 · P 继续</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
