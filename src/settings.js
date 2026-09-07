@@ -23,6 +23,8 @@ const DEFAULTS = {
   },
   radarRange: 20,                  // 雷达距离 km（系统设置可调 5~40）
   radarScan: 65,                   // 雷达水平扫描半角 °（±60~±120）
+  mission: 'intercept',            // intercept | survival | ace
+  audio: { bgm: 0.45, sfx: 0.7 }, // 背景音乐 / 音效音量
 };
 
 function clone(d) { return JSON.parse(JSON.stringify(d)); }
@@ -37,6 +39,7 @@ export const Settings = {
         this.data = { ...clone(DEFAULTS), ...parsed };
         this.data.keybinds = { ...clone(DEFAULTS).keybinds, ...(parsed.keybinds ?? {}) };
         this.data.overrides = { ...clone(DEFAULTS).overrides, ...(parsed.overrides ?? {}) };
+        this.data.audio = { ...clone(DEFAULTS).audio, ...(parsed.audio ?? {}) };
       }
     } catch { /* 损坏则用默认 */ }
     return this.data;

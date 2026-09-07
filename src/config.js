@@ -70,6 +70,61 @@ export const AIRCRAFT = {
     yawRateMax: 0.9,
     maxG: 9, minG: -3,
   },
+  // ── 新增可飞/敌对机体 ──
+  player_j10c: {
+    name: 'J-10C',
+    mass: 12500,
+    wingArea: 38.0,
+    CLalpha: 4.4,
+    CLmax: 1.55,
+    alphaStall: 22,
+    CD0: 0.022,
+    kInduced: 0.11,
+    thrustMax: 130000,          // WS-10B 加力
+    thrustMil: 80000,
+    pitchRateMax: 3.2,
+    rollRateMax: 4.2,
+    yawRateMax: 0.9,
+    maxG: 9, minG: -3,
+    fuel: 3600,
+    fuelBurnAB: 16.0,
+    fuelBurnMil: 2.9,
+  },
+  enemy_j10c: {
+    name: 'J-10C',
+    mass: 12500,
+    wingArea: 38.0,
+    CLalpha: 4.4,
+    CLmax: 1.55,
+    alphaStall: 22,
+    CD0: 0.022,
+    kInduced: 0.11,
+    thrustMax: 130000,
+    thrustMil: 80000,
+    pitchRateMax: 3.2,
+    rollRateMax: 4.2,
+    yawRateMax: 0.9,
+    maxG: 9, minG: -3,
+  },
+  enemy_f15c: {
+    name: 'F-15C',
+    mass: 20000,
+    wingArea: 56.5,
+    CLalpha: 4.2,
+    CLmax: 1.45,
+    alphaStall: 20,
+    CD0: 0.022,
+    kInduced: 0.12,
+    thrustMax: 216000,          // F100-PW-220 ×2
+    thrustMil: 124000,
+    pitchRateMax: 3.0,
+    rollRateMax: 4.0,
+    yawRateMax: 0.8,
+    maxG: 9, minG: -3,
+    fuel: 6100,
+    fuelBurnAB: 20.0,
+    fuelBurnMil: 3.6,
+  },
   enemy_su30: {
     name: 'Su-30SM2',
     mass: 21500,
@@ -231,4 +286,28 @@ export const WORLD = {
   spawnAltitude: 2500,
   ceiling: 15000,              // 游戏高度上限 m
   killFloor: -200,             // 低于此高度判定坠毁（地形碰撞另有检测）
+};
+
+
+// ---------------- 任务模式 ----------------
+export const MISSIONS = {
+  intercept: {
+    name: '拦截巡逻',
+    brief: '无限波次拦截来袭机群，尽可能积累战果与分数。补给点可反复穿环补弹。',
+    type: 'intercept',
+  },
+  survival: {
+    name: '坚守空域',
+    brief: '在敌机连续攻势下坚持 5 分钟即完成任务；阵亡或坠地则失败。波次强度随时间递增。',
+    type: 'survival',
+    duration: 300,              // 秒
+  },
+  ace: {
+    name: '猎杀王牌',
+    brief: '敌军王牌小队将在第 3 波抵达（标记 ACE）。击落王牌机即完成任务，普通敌机无限增援。',
+    type: 'ace',
+    aceWave: 3,
+    aceHP: 260,
+    bonusScore: 1500,
+  },
 };

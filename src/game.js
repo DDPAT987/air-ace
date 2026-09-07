@@ -1,6 +1,6 @@
 // game.js — 游戏编排：实体管理、武器发射、碰撞、计分、波次、特效、干扰对策
 import * as THREE from 'three';
-import { AIRCRAFT, WEAPONS, WORLD, HUD_COLOR, COUNTERMEASURES } from './config.js';
+import { AIRCRAFT, WEAPONS, WORLD, HUD_COLOR, COUNTERMEASURES, MISSIONS } from './config.js';
 import { Aircraft, buildPlaceholderJet } from './aircraft.js';
 import { EnemyAI, WaveManager } from './ai.js';
 import { fireGun, fireMissile } from './weapons.js';
@@ -26,6 +26,8 @@ export class Game {
     this.kills = 0;
     this.deaths = 0;
     this.wave = 0;
+    this.audio = null;             // 由 main 注入 GameAudio
+    this.missionState = null;      // 由 startMission 初始化
     this.messages = [];            // { text, time, color }
     this.gunRounds = WEAPONS.gun.rounds;
     this.missileCount = WEAPONS.aim120.count;
@@ -57,6 +59,7 @@ export class Game {
   }
 
   start() {
+    this._initMission();
     // 玩家：按设置选择机体与参数
     const acKey = this.settings.data.aircraft in AIRCRAFT ? this.settings.data.aircraft : 'player_f16';
     const spec = buildPlayerSpec(AIRCRAFT[acKey], this.settings.data.overrides);
@@ -152,6 +155,7 @@ export class Game {
       this.chaffCount = COUNTERMEASURES.chaffCount;
       if (p.spec?.fuel) p.fuel = p.spec.fuel;
       this._supplyCd = 25;
+      this.audio?.supply();
       this.addMessage(needRefill ? '✈ 补给点：弹药/干扰物/燃油已补满' : '✈ 补给点：状态已恢复', HUD_COLOR.info);
     }
   }
@@ -179,6 +183,47 @@ export class Game {
     this.start();
   }
 
+  // ---------------- 任务模式 ----------------
+  _initMission() {
+    const def = MISSIONS[Settings.data.mission] || MISSIONS.intercept;
+    this.mission = def;
+    this.missionState = { type: def.type, timeLeft: def.duration ?? 0, aceAlive: false, done: false };
+  }
+
+  _checkAceSpawn() {
+    const st = this.missionState;
+    if (!st || st.type !== 'ace' || st.aceAlive || this.wave < MISSIONS.ace.aceWave) return;
+    st.aceAlive = true;
+    // 将本波最后一架敌机升级为王牌
+    const e = this.enemies[this.enemies.length - 1];
+    if (!e) return;
+    e.hp = e.maxHp = MISSIONS.ace.aceHP;
+    e.ai.skill = 0.95;
+    e.ai.aggression = 0.95;
+    e.isAce = true;
+    this.addMessage(`⚠ 敌王牌「${e.spec.name} ACE」进入空域 — 击落它完成任务`, HUD_COLOR.danger);
+  }
+
+  _updateMission(dt) {
+    const st = this.missionState;
+    if (!st || st.done || this.gameOver) return;
+    if (st.type === 'survival') {
+      st.timeLeft = Math.max(0, st.timeLeft - dt);
+      if (st.timeLeft <= 0) this._missionComplete();
+    }
+  }
+
+  _missionComplete() {
+    const st = this.missionState;
+    if (!st || st.done) return;
+    st.done = true;
+    const bonus = st.type === 'ace' ? MISSIONS.ace.bonusScore : 1000;
+    this.score += bonus;
+    this.addMessage(`★ 任务完成：${this.mission.name}（+${bonus} 分）`, HUD_COLOR.main);
+    this.gameOver = true;
+    this.missionWon = true;
+  }
+
   spawnWave() {
     this.waveMgr.wave += 1;
     this.wave = this.waveMgr.wave;
@@ -201,16 +246,19 @@ export class Game {
       enemy.ai.terrainHeight = (x, z) => terrain ? terrain.heightAt(x, z) : 0;
       enemy._flares = COUNTERMEASURES.enemyFlares;
       enemy._chaffs = COUNTERMEASURES.enemyChaffs;
-      enemy.hp = s.type === 'enemy_su30' ? 140 : 100;
+      const heavy = s.type === 'enemy_su30' || s.type === 'enemy_f15c';
+      enemy.hp = heavy ? 140 : 100;
       enemy.maxHp = enemy.hp;
       const mesh = this.modelLib
         ? this.modelLib.makeJet(s.type, false)
-        : buildPlaceholderJet(s.type === 'enemy_su30' ? 0x8a4a3a : 0x7a3535);
+        : buildPlaceholderJet(heavy ? 0x8a4a3a : 0x7a3535);
       this.scene.add(mesh);
       enemy.object3D = mesh;
       this.enemies.push(enemy);
     }
     this.addMessage(`第 ${this.wave} 波：${spec.count} 架敌机接近`, HUD_COLOR.warn);
+    this.audio?.waveStart();
+    this._checkAceSpawn();
   }
 
   addMessage(text, color = HUD_COLOR.main) {
@@ -273,6 +321,7 @@ export class Game {
 
   update(dt) {
     this.time += dt;
+    this._updateMission(dt);
     const input = this.input;
 
     // ---- 玩家输入 ----
@@ -378,6 +427,7 @@ export class Game {
         }
       } else if (this.player?.alive && b.position.distanceTo(this.player.position) < 16) {
         const killed = this.player.applyDamage(b.damage);
+        this.audio?.hit();
         this.spawnHitSpark(b.position, 0xff7a5a);
         this.hitFlash = Math.min(1, this.hitFlash + 0.35);
         this.chaseCam.addShake(0.4);
@@ -493,6 +543,7 @@ export class Game {
       this._gunAcc -= 1;
       this.gunRounds -= 1;
       const bullets = fireGun(p, dir, WEAPONS.gun, 'player');
+      this.audio?.gun();
       for (const b of bullets) {
         const mesh = new THREE.Mesh(this.tracerGeo, this.tracerMat);
         mesh.position.copy(b.position);
@@ -542,6 +593,7 @@ export class Game {
     const side = alternate ? (this.missileCount % 2 === 0 ? 1 : -1) : 1;
     const offset = new THREE.Vector3(side * 1.6, -1.2, -1);
     const m = fireMissile(owner, target, spec, team, Math.random(), { offset });
+    this.audio?.missileLaunch();
     const mesh = this.modelLib
       ? this.modelLib.makeMissile(spec === WEAPONS.aim120 ? 'aim120' : (spec === WEAPONS.aim9 ? 'aim9' : 'r77'))
       : new THREE.Mesh(this.missileGeo, this.missileMat);
@@ -681,6 +733,7 @@ export class Game {
   onEnemyKilled(e, by) {
     this.kills += 1;
     this.score += by === 'missile' ? 300 : 200;
+    if (e.isAce && this.missionState?.type === 'ace') this._missionComplete();
     this.addMessage(`击落 ${e.spec.name}！+${by === 'missile' ? 300 : 200}`, HUD_COLOR.main);
     this.spawnExplosion(e.position, 1.6);
     // 目标索引修正
@@ -747,6 +800,7 @@ export class Game {
   }
 
   spawnExplosion(pos, scale = 1) {
+    if (this.player) this.audio?.explosion(this.player.position.distanceTo(pos));
     const parts = [];
     const n = Math.round(10 * scale);
     for (let i = 0; i < n; i++) {

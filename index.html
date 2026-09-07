@@ -74,6 +74,13 @@
   }
   .accard:hover { border-color: #4db8ff; }
   .accard.selected { border-color: #6fe3ff; box-shadow: 0 0 14px #2f9dff55; background: #14384f; }
+  .missioncard {
+    text-align: left; padding: 8px 10px; border: 1px solid #2f6d9d66; border-radius: 6px;
+    background: #0e1e2bd9; cursor: pointer; font-size: 11px; color: #7ab8d8; line-height: 1.6;
+    font-family: inherit;
+  }
+  .missioncard:hover { border-color: #4db8ff; }
+  .missioncard.selected { border-color: #6fe3ff; box-shadow: 0 0 14px #2f9dff55; background: #14384f; }
   .accard .acname { font-size: 14px; color: #cfeaff; letter-spacing: 2px; }
   .sliders { text-align: left; }
   .slider-row { display: flex; align-items: center; gap: 10px; padding: 4px 2px; font-size: 12px; color: #8fc8ec; }
@@ -165,7 +172,8 @@
   </div>
 
   <div class="tabpane" id="tab-start">
-    <div class="mission-brief">花莲空域 · 中央山脉前线<br>拦截来袭机群，善用热诱弹与箔条规避导弹，守住海岸线</div>
+    <div class="mission-brief" id="missionBrief">花莲空域 · 中央山脉前线<br>拦截来袭机群，善用热诱弹与箔条规避导弹，守住海岸线</div>
+    <div id="missionSel" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 auto 12px;width:560px;max-width:92vw"></div>
     <div class="progress"><div class="bar" id="loadbar"></div></div>
     <div class="msg" id="loadmsg">初始化引擎…</div>
     <button class="startbtn" id="startbtn" disabled>开 始 任 务</button>
@@ -195,6 +203,8 @@
     <div class="optrow"><label>鼠标灵敏度</label><input type="range" id="optSens" min="0.3" max="2.5" step="0.1"><span id="optSensVal" style="color:#cfeaff"></span></div>
     <div class="optrow" style="color:#8ab4d8;font-size:12px">鼠标飞控圆环：机头追逐圆环方向，键盘始终优先</div>
     <div class="optrow"><label style="width:100%"><input type="checkbox" id="optShake"> 相机抖动特效（高过载/爆炸/加力）</label></div>
+    <div class="optrow"><label>音乐音量</label><input type="range" id="optBgmVol" min="0" max="1" step="0.05"><span id="optBgmVolVal" style="color:#cfeaff"></span></div>
+    <div class="optrow"><label>音效音量</label><input type="range" id="optSfxVol" min="0" max="1" step="0.05"><span id="optSfxVolVal" style="color:#cfeaff"></span></div>
     <div class="hint">所有设置自动保存在浏览器本地，刷新后保留</div>
   </div>
 </div>

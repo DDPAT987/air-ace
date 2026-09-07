@@ -9,6 +9,7 @@ import { RealTerrain } from './terrain.js';
 import { ModelLibrary } from './assets.js';
 import { Settings } from './settings.js';
 import { Menu } from './menu.js';
+import { GameAudio } from './audio.js';
 
 const overlay = document.getElementById('overlay');
 const loadBar = document.getElementById('loadbar');
@@ -97,6 +98,9 @@ scene.add(sun);
 const input = new Input(document.body, Settings);
 const chaseCam = new ChaseCamera(camera, Settings);
 const game = new Game(scene, camera, input, chaseCam);
+const audio = new GameAudio();
+audio.setVolumes(Settings.data.audio ?? {});
+game.audio = audio;
 const hud = new HUD(document.getElementById('hud'), game);
 const modelLib = new ModelLibrary();
 
@@ -104,6 +108,9 @@ const menu = new Menu({
   onStart: () => {
     // 首次开始：按当前设置生成玩家（boot 不再预生成）
     if (!game.player) { game.start(); menu.resetStartLabel(); }
+    audio.init(); audio.resume();
+    audio.startBGM(); audio.startEngine();
+    audio.setPausedMuted(false);
     input.setCamera?.(camera);
     state.running = true;
     state.paused = false;
@@ -131,7 +138,7 @@ const state = {
   paused: false,
   time: 0,
 };
-window.__GAME__ = { renderer, scene, camera, game, input, state, THREE, hud, settings: Settings };
+window.__GAME__ = { renderer, scene, camera, game, input, state, THREE, hud, settings: Settings, audio };
 input.setCamera(camera);   // 鼠标飞控圆环 → 世界方向反投影用
 
 // ---------------- 死亡界面 ----------------
@@ -141,15 +148,25 @@ function showDeath() {
   const t = Math.floor(game.time);
   const mm = String(Math.floor(t / 60)).padStart(2, '0');
   const ss = String(t % 60).padStart(2, '0');
+  const won = !!game.missionWon;
+  const h3 = deathScreen.querySelector('h3');
+  if (h3) {
+    h3.textContent = won ? '任 务 完 成' : '机 体 损 毁';
+    h3.style.color = won ? '#6fe3ff' : '#ff5d5d';
+    h3.style.textShadow = won ? '0 0 18px #2f9dff88' : '0 0 18px #ff5d5d88';
+  }
   deathStats.innerHTML =
-    `最终得分 <b>${game.score}</b> · 击落 <b>${game.kills}</b> 架<br>` +
+    `任务 <b>${game.mission?.name ?? '拦截巡逻'}</b> · 最终得分 <b>${game.score}</b> · 击落 <b>${game.kills}</b> 架<br>` +
     `抵达波次 <b>第 ${game.wave} 波</b> · 飞行时长 <b>${mm}:${ss}</b><br>` +
     `机体 <b>${game.player?.spec?.name ?? '—'}</b>`;
   deathScreen.classList.remove('hidden');
+  audio.stopEngine();
+  if (!won) audio.death();
   input.exitPointerLock();
 }
 function restartMission() {
   if (!deathShown) return;
+  audio.resume(); audio.startEngine();
   game.reset();
   chaseCam.reinit();
   deathScreen.classList.add('hidden');
@@ -177,6 +194,7 @@ function setPaused(v) {
   state.paused = v;
   pauseScreen.classList.toggle('hidden', !v);
   pauseTag.classList.add('hidden');
+  audio.setPausedMuted(v);
   if (v) input.exitPointerLock(); else input.requestPointerLock();
 }
 document.getElementById('btnResume').addEventListener('click', () => setPaused(false));
@@ -216,7 +234,11 @@ function loop() {
       state.time += dt;
       input.updateAim(dt);
       game.update(dt);
-      if (game.player?.alive) chaseCam.update(dt, game.player, input);
+      if (game.player?.alive) {
+        chaseCam.update(dt, game.player, input);
+        const p = game.player;
+        audio.updateEngine(p.throttle ?? 0, (p.velocity?.length() ?? 0) / 340, p.afterburner);
+      }
       if (game.gameOver && !deathShown) showDeath();
       input.endFrame();
     }
@@ -254,6 +276,11 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'Enter' && deathShown) restartMission();
 });
 
+// UI 点击音（委托：菜单/按钮通用）
+document.addEventListener('click', (e) => {
+  if (e.target.closest('button')) audio.uiClick();
+}, true);
+
 // ---------------- 引导流程 ----------------
 async function boot() {
   try {
@@ -289,6 +316,14 @@ async function boot() {
     setProgress(1.0, '就绪 · 配置完成后开始任务');
     console.log('[boot] ready');
     menu.enableStart();
+    // 菜单期预合成 BGM：首次任意点击（手势）初始化音频，避免开始任务时 0.7s 合成卡顿
+    const preAudio = () => {
+      audio.init(); audio.resume();
+      audio.startBGM();          // 幂等：任务开始时直接复用
+      audio.setPausedMuted(true); // 菜单里低音量氛围
+      document.removeEventListener('click', preAudio);
+    };
+    document.addEventListener('click', preAudio);
   } catch (err) {
     console.error('[boot]', err);
     setProgress(1.0, `加载失败：${err.message}`);

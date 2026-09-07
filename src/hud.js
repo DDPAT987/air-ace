@@ -64,6 +64,11 @@ export class HUD {
 
   // ---------------- 计分区 ----------------
   drawScore() {
+    // Tab 锁定提示音（目标切换检测）
+    if (this.game.targetIdx !== this._lastTargetIdx) {
+      this._lastTargetIdx = this.game.targetIdx;
+      if (this.game.targetIdx >= 0) this.game.audio?.lockTone();
+    }
     const ctx = this.ctx;
     ctx.textAlign = 'left';
     ctx.font = 'bold 15px Consolas, monospace';
@@ -72,6 +77,28 @@ export class HUD {
     ctx.font = '12px Consolas, monospace';
     ctx.fillStyle = HUD_COLOR.dim;
     ctx.fillText(`击落 ${this.game.kills}   阵亡 ${this.game.deaths}   第 ${this.game.wave} 波   敌机 ${this.game.enemies.length}`, 22, 54);
+    // 任务状态行（第 3 行）
+    const st = this.game.missionState;
+    const mi = this.game.mission;
+    if (st && !st.done) {
+      ctx.font = 'bold 12px Consolas, monospace';
+      if (st.type === 'survival') {
+        const s = Math.ceil(st.timeLeft);
+        ctx.fillStyle = s <= 30 ? HUD_COLOR.danger : HUD_COLOR.warn;
+        ctx.fillText(`任务：${mi?.name ?? ''} — 坚持剩余 ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`, 22, 72);
+      } else if (st.type === 'ace') {
+        const ace = this.game.enemies.find(e => e.isAce && e.alive);
+        ctx.fillStyle = HUD_COLOR.danger;
+        ctx.fillText(ace ? `任务：猎杀王牌 — ACE 在空（HP ${Math.ceil(ace.hp)}/${ace.maxHp}）` : '任务：猎杀王牌 — 等待王牌抵达…', 22, 72);
+      } else {
+        ctx.fillStyle = HUD_COLOR.info;
+        ctx.fillText(`任务：${mi?.name ?? '拦截巡逻'} — 无限波次`, 22, 72);
+      }
+    } else if (st?.done) {
+      ctx.font = 'bold 12px Consolas, monospace';
+      ctx.fillStyle = HUD_COLOR.main;
+      ctx.fillText('任务完成 ★', 22, 72);
+    }
   }
 
   // ---------------- 速度（飞控圆环左侧，随屏幕自适应）----------------
@@ -299,11 +326,18 @@ export class HUD {
       const x = (v.x * 0.5 + 0.5) * this.w;
       const y = (-v.y * 0.5 + 0.5) * this.h;
       const isTarget = e === this.game.target;
+      const isAce = !!e.isAce;
       ctx.save();
       ctx.strokeStyle = isTarget ? HUD_COLOR.warn : 'rgba(255,110,110,0.85)';
       ctx.lineWidth = isTarget ? 2 : 1.2;
       if (onScreen) {
         const s = clamp(2600 / Math.max(dist, 200), 10, 34);
+        if (isAce) {
+          ctx.font = 'bold 11px Consolas, monospace';
+          ctx.fillStyle = '#ff5d5d';
+          ctx.textAlign = 'center';
+          ctx.fillText('ACE', x, y - s - 8);
+        }
         // 角框
         ctx.beginPath();
         for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
@@ -515,6 +549,11 @@ export class HUD {
     const R = 84;
     const cx = R + 30, cy = this.h / 2;
     const threats = this.game.rwrThreats ? this.game.rwrThreats() : [];
+    // 威胁音：来袭导弹急促 / 被锁定常规
+    const missileInbound = threats.some(t => t.kind === 'missile');
+    const locked = threats.some(t => t.kind === 'lock');
+    if (missileInbound) this.game.audio?.rwrBeep(true);
+    else if (locked) this.game.audio?.rwrBeep(false);
     ctx.save();
     // 底盘
     ctx.strokeStyle = HUD_COLOR.main;

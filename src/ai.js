@@ -265,7 +265,7 @@ export class WaveManager {
       velocity: new THREE.Vector3(Math.cos(ang + 1.6) * 180, 0, Math.sin(ang + 1.6) * 180),
       skill: spec.skill,
       aggression: spec.aggression,
-      type: Math.random() < 0.35 ? 'enemy_su30' : 'enemy_mig29',
+      type: ['enemy_mig29', 'enemy_mig29', 'enemy_su30', 'enemy_j10c', 'enemy_f15c'][Math.floor(Math.random() * 5)],
     };
   }
 }

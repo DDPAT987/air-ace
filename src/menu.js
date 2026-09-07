@@ -1,5 +1,5 @@
 // menu.js — 主菜单逻辑：标签页 / 按键重绑 / 机体选择与参数 / 系统设置
-import { AIRCRAFT, WEAPONS } from './config.js';
+import { AIRCRAFT, WEAPONS, MISSIONS } from './config.js';
 import { Settings } from './settings.js';
 
 const KEY_LABELS = [
@@ -23,7 +23,9 @@ const KEY_LABELS = [
 
 const FLYABLE = [
   ['player_f16', 'F-16CM', '轻战 · 高滚转率，敏捷均衡'],
+  ['player_j10c', '歼-10C', '中式轻战 · 大迎角，能量灵活'],
   ['enemy_mig29', 'MiG-29M', '推重比高 · 加速凶悍'],
+  ['enemy_f15c', 'F-15C', '鹰 · 双发重战，高速血厚'],
   ['enemy_su30', 'Su-30SM2', '重型 · 血厚弹多，惯性大'],
 ];
 
@@ -63,6 +65,7 @@ export class Menu {
     this._bindTabs();
     this._buildKeyList();
     this._buildAircraft();
+    this._buildMission();
     this._buildSystem();
     this.startBtn.addEventListener('click', () => this._start());
     document.getElementById('keysReset').addEventListener('click', () => { Settings.resetKeys(); this._buildKeyList(); });
@@ -167,6 +170,28 @@ export class Menu {
     }
   }
 
+  _buildMission() {
+    const box = document.getElementById('missionSel');
+    if (!box) return;
+    box.innerHTML = '';
+    const brief = document.getElementById('missionBrief');
+    for (const [key, m] of Object.entries(MISSIONS)) {
+      const card = document.createElement('button');
+      card.className = 'missioncard' + (this.data.mission === key ? ' selected' : '');
+      card.style.cursor = 'pointer';
+      card.innerHTML = `<div class="acname" style="font-size:13px">${m.name}</div><div style="font-size:10px;color:#7ab8d8">${m.brief.slice(0, 26)}…</div>`;
+      card.onclick = () => {
+        this.data.mission = key;
+        Settings.save();
+        this._buildMission();
+        brief.innerHTML = `${m.name} · 花莲空域<br>${m.brief}`;
+      };
+      box.appendChild(card);
+    }
+    const cur = MISSIONS[this.data.mission] || MISSIONS.intercept;
+    brief.innerHTML = `${cur.name} · 花莲空域<br>${cur.brief}`;
+  }
+
   _buildSystem() {
     // 雷达距离（km）：锁定目标与雷达面板的探测距离
     const rr = document.getElementById('optRadarRange');
@@ -203,6 +228,23 @@ export class Menu {
     const shake = document.getElementById('optShake');
     shake.checked = this.data.cameraShake ?? true;
     shake.addEventListener('change', () => { this.data.cameraShake = shake.checked; Settings.save(); });
+
+    // 音量（音乐 / 音效）
+    const mkVol = (id, valId, key) => {
+      const el = document.getElementById(id);
+      const vEl = document.getElementById(valId);
+      if (!el) return;
+      el.value = (this.data.audio?.[key] ?? 0.5);
+      vEl.textContent = `${Math.round(el.value * 100)}%`;
+      el.addEventListener('input', () => {
+        this.data.audio = { ...this.data.audio, [key]: Number(el.value) };
+        vEl.textContent = `${Math.round(el.value * 100)}%`;
+        Settings.save();
+        window.__GAME__?.audio?.setVolumes(this.data.audio);
+      });
+    };
+    mkVol('optBgmVol', 'optBgmVolVal', 'bgm');
+    mkVol('optSfxVol', 'optSfxVolVal', 'sfx');
   }
 
   enableStart() {

@@ -24,6 +24,18 @@ const REGISTRY = {
     targetLength: 21.9,           // Su-30SM2 全长约 21.9m，自动归一化缩放
     fallbackColor: 0x5d6b70,
   },
+  j10c: {
+    fbx: 'public/models/j10c/J10C.fbx',
+    mtl: null,
+    targetLength: 16.9,          // 歼-10C 全长约 16.9m
+    fallbackColor: 0x6d8a9c,
+  },
+  f15c: {
+    fbx: 'public/models/f15c/F15C.fbx',
+    mtl: null,
+    targetLength: 19.43,         // F-15C 全长约 19.43m
+    fallbackColor: 0x9aa4ad,
+  },
   aim120: {
     obj: 'public/models/aim120/us_aim_120a_default.obj',
     mtl: 'public/models/aim120/us_aim_120a_default.mtl',
@@ -198,7 +210,10 @@ export class ModelLibrary {
   makeJet(kind, isPlayer) {
     const key = kind === 'player_f16' ? 'f16'
       : kind === 'enemy_mig29' ? 'mig29'
-      : kind === 'enemy_su30' ? 'su30' : null;
+      : kind === 'enemy_su30' ? 'su30'
+      : kind === 'player_j10c' ? 'j10c'
+      : kind === 'enemy_j10c' ? 'j10c'
+      : kind === 'enemy_f15c' ? 'f15c' : null;
     const proto = key ? this.models[key] : null;
     if (!proto) {
       return buildPlaceholderJet(isPlayer ? 0x5b7d9e : (kind === 'enemy_su30' ? 0x8a4a3a : 0x7a3535));
