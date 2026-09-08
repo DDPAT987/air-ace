@@ -36,8 +36,8 @@ const SLIDERS = [
   ['alphaStall', '失速迎角', 0, 26, 1, (v) => v > 0 ? `${v}°` : '默认'],
   ['maxG', '最大正过载', 4, 17, 1, (v) => `${v}G`, (base) => base.overrides.maxG > 0 ? base.overrides.maxG : 9],
   ['minG', '最大负过载', -8, -1, 1, (v) => `${v}G`, (base) => base.overrides.minG < 0 ? base.overrides.minG : -3],
-  ['missiles', 'AIM-120 数量', 0, 8, 1, (v) => v > 0 ? String(v) : `默认${WEAPONS.aim120.count}`],
-  ['aim9', 'AIM-9 数量', 0, 6, 1, (v) => v > 0 ? String(v) : `默认${WEAPONS.aim9.count}`],
+  ['missiles', '中距弹数量（按机型：AIM-120 / PL-12A / R-77-1）', 0, 8, 1, (v) => v > 0 ? String(v) : '默认'],
+  ['aim9', '近距弹数量（按机型：AIM-9 / PL-8 / R-73）', 0, 6, 1, (v) => v > 0 ? String(v) : '默认'],
   ['gunRounds', '航炮弹量', 0, 800, 10, (v) => v > 0 ? String(v) : `默认${WEAPONS.gun.rounds}`],
   ['fuelMul', '燃油倍率', 0.5, 2.0, 0.1, (v) => `×${v.toFixed(1)}`],
 ];

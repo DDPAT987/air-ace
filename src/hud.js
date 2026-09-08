@@ -261,8 +261,9 @@ export class HUD {
       ctx.fillText(`/${max}`, x0 + w + 26, y);
       ctx.fillStyle = HUD_COLOR.main;
     };
-    drawW('AIM-120', this.game.missileCount, max120, x + 130, sel === 'aim120');
-    drawW('AIM-9', m9, max9, x + 260, sel === 'aim9');
+    const lo = this.game._loadout ?? { mr: 'aim120', ir: 'aim9' };
+    drawW(WEAPONS[lo.mr]?.name ?? 'AIM-120', this.game.missileCount, max120, x + 130, sel === lo.mr);
+    drawW(WEAPONS[lo.ir]?.name ?? 'AIM-9', m9, max9, x + 260, sel === lo.ir);
     // 干扰对策余量（常驻显示）
     const maxF = 36, maxC = 24;
     ctx.fillStyle = this.game.flareCount > 6 ? HUD_COLOR.main : HUD_COLOR.warn;

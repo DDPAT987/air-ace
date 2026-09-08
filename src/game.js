@@ -5,6 +5,12 @@ import { Aircraft, buildPlaceholderJet } from './aircraft.js';
 import { EnemyAI, WaveManager } from './ai.js';
 import { fireGun, fireMissile } from './weapons.js';
 import { clamp, damp } from './aero.js';
+
+// 导弹 spec → 模型 key（玩家 / 敌机通用）
+const MISSILE_KIND_BY_SPEC = new Map([
+  [WEAPONS.aim120, 'aim120'], [WEAPONS.r77, 'r77'], [WEAPONS.aim9, 'aim9'],
+  [WEAPONS.pl12a, 'pl12'], [WEAPONS.pl8, 'pl8'], [WEAPONS.r73, 'r73'],
+]);
 import { Settings, buildPlayerSpec, missionCounts } from './settings.js';
 
 export class Game {
@@ -67,6 +73,7 @@ export class Game {
     this.missileCount = counts.missiles;          // AIM-120
     this.missile9Count = counts.aim9;             // AIM-9
     this.selectedWeapon = 'aim120';
+    this._loadout = { mr: 'aim120', ir: 'aim9' };   // start() 按机型覆写
     this.gunRounds = counts.gunRounds;
     this._maxMissiles = counts.missiles;
     this._maxMissiles9 = counts.aim9;
@@ -74,6 +81,8 @@ export class Game {
     this.flareCount = COUNTERMEASURES.flareCount;
     this.chaffCount = COUNTERMEASURES.chaffCount;
     this._playerSpecKey = acKey;
+    this._loadout = spec.loadout ?? { mr: 'aim120', ir: 'aim9' };
+    this.selectedWeapon = this._loadout.mr;
 
     const spawnX = 0, spawnZ = Math.min(this.terrain ? this.terrain.worldD / 2 - 6000 : 8000, 12000);
     const groundAt = this.terrain ? this.terrain.heightAt(spawnX, spawnZ) : 0;
@@ -337,12 +346,12 @@ export class Game {
 
       // 武器选择（1=AIM-120 雷达弹 / 2=AIM-9 红外弹）
       if (input.actionJustPressed('weapon1')) {
-        this.selectedWeapon = 'aim120';
-        this.addMessage(`武器：${WEAPONS.aim120.name} 雷达弹`, HUD_COLOR.info);
+        this.selectedWeapon = this._loadout.mr;
+        this.addMessage(`武器：${WEAPONS[this._loadout.mr].name} 雷达弹`, HUD_COLOR.info);
       }
       if (input.actionJustPressed('weapon2')) {
-        this.selectedWeapon = 'aim9';
-        this.addMessage(`武器：${WEAPONS.aim9.name} 红外弹`, HUD_COLOR.info);
+        this.selectedWeapon = this._loadout.ir;
+        this.addMessage(`武器：${WEAPONS[this._loadout.ir].name} 红外弹`, HUD_COLOR.info);
       }
 
       // 开火
@@ -579,23 +588,24 @@ export class Game {
 
   firePlayerMissile() {
     if (!this.target) { this.addMessage('无锁定目标', HUD_COLOR.warn); return; }
-    const isIR = this.selectedWeapon === 'aim9';
-    if (isIR && this.missile9Count <= 0) { this.addMessage('AIM-9 耗尽', HUD_COLOR.warn); return; }
-    if (!isIR && this.missileCount <= 0) { this.addMessage('AIM-120 耗尽', HUD_COLOR.warn); return; }
-    const spec = isIR ? WEAPONS.aim9 : WEAPONS.aim120;
+    const isIR = this.selectedWeapon === this._loadout.ir;
+    if (isIR && this.missile9Count <= 0) { this.addMessage(`${WEAPONS[this._loadout.ir].name} 耗尽`, HUD_COLOR.warn); return; }
+    if (!isIR && this.missileCount <= 0) { this.addMessage(`${WEAPONS[this._loadout.mr].name} 耗尽`, HUD_COLOR.warn); return; }
+    const spec = WEAPONS[isIR ? this._loadout.ir : this._loadout.mr];
     if (isIR) this.missile9Count -= 1;
     else this.missileCount -= 1;
     this.launchMissile(this.player, this.target, spec, 'player', !isIR);
-    this.addMessage(isIR ? 'FOX 2 — AIM-9 发射' : 'FOX 3 — AIM-120 发射', HUD_COLOR.info);
+    this.addMessage(isIR ? `FOX 2 — ${WEAPONS[this._loadout.ir].name} 发射` : `FOX 3 — ${WEAPONS[this._loadout.mr].name} 发射`, HUD_COLOR.info);
   }
 
   launchMissile(owner, target, spec, team, alternate = false) {
+    const specKind = MISSILE_KIND_BY_SPEC.get(spec) ?? 'aim120';
     const side = alternate ? (this.missileCount % 2 === 0 ? 1 : -1) : 1;
     const offset = new THREE.Vector3(side * 1.6, -1.2, -1);
     const m = fireMissile(owner, target, spec, team, Math.random(), { offset });
     this.audio?.missileLaunch();
     const mesh = this.modelLib
-      ? this.modelLib.makeMissile(spec === WEAPONS.aim120 ? 'aim120' : (spec === WEAPONS.aim9 ? 'aim9' : 'r77'))
+      ? this.modelLib.makeMissile(specKind)
       : new THREE.Mesh(this.missileGeo, this.missileMat);
     if (!this.modelLib) mesh.rotation.x = Math.PI / 2;
     mesh.quaternion.copy(m.quat);

@@ -37,6 +37,7 @@ export function airDensity(altitude) {
 export const AIRCRAFT = {
   player_f16: {
     name: 'F-16CM',
+    loadout: { mr: 'aim120', ir: 'aim9' },
     mass: 9500,                 // 作战重量
     wingArea: 27.87,
     CLalpha: 4.6,               // 1/rad（含涡升力等效）
@@ -56,6 +57,7 @@ export const AIRCRAFT = {
   },
   enemy_mig29: {
     name: 'MiG-29M',
+    loadout: { mr: 'r77', ir: 'r73' },
     mass: 11000,
     wingArea: 43.0,
     CLalpha: 4.3,
@@ -73,6 +75,7 @@ export const AIRCRAFT = {
   // ── 新增可飞/敌对机体 ──
   player_j10c: {
     name: 'J-10C',
+    loadout: { mr: 'pl12a', ir: 'pl8' },
     mass: 12500,
     wingArea: 38.0,
     CLalpha: 4.4,
@@ -92,6 +95,7 @@ export const AIRCRAFT = {
   },
   enemy_j10c: {
     name: 'J-10C',
+    loadout: { mr: 'pl12a', ir: 'pl8' },
     mass: 12500,
     wingArea: 38.0,
     CLalpha: 4.4,
@@ -108,6 +112,7 @@ export const AIRCRAFT = {
   },
   enemy_f15c: {
     name: 'F-15C',
+    loadout: { mr: 'aim120', ir: 'aim9' },
     mass: 20000,
     wingArea: 56.5,
     CLalpha: 4.2,
@@ -127,6 +132,7 @@ export const AIRCRAFT = {
   },
   enemy_su30: {
     name: 'Su-30SM2',
+    loadout: { mr: 'r77', ir: 'r73' },
     mass: 21500,
     wingArea: 62.0,
     CLalpha: 4.2,
@@ -203,6 +209,39 @@ export const WEAPONS = {
     damage: 75,
     maxG: 35,
     flareDecoyFactor: 1.0,      // 红外弹：热诱弹完全有效
+    count: 4,
+  },
+  pl12a: {                      // 歼-10C 中距主动雷达弹
+    name: 'PL-12A',
+    boostAccel: 345,
+    boostTime: 3.1,
+    sustainAccel: 58,
+    sustainTime: 4.8,
+    dragCD: 0.000029,
+    maxSpeed: 1150,
+    N: 4.5,
+    seekerRange: 17000,
+    loftAngle: 0.20,
+    fuseRadius: 24,
+    damage: 105,
+    maxG: 40,
+    flareDecoyFactor: 0.05,
+    count: 6,
+  },
+  pl8: {                        // 歼-10C 近距红外弹
+    name: 'PL-8',
+    boostAccel: 320,
+    boostTime: 2.6,
+    sustainAccel: 40,
+    sustainTime: 3.5,
+    dragCD: 0.000031,
+    maxSpeed: 850,
+    N: 4.0,
+    seekerRange: 9000,
+    fuseRadius: 20,
+    damage: 85,
+    maxG: 35,
+    flareDecoyFactor: 0.85,
     count: 4,
   },
   aim9: {                       // 玩家近距红外弹（AIM-9M 响尾蛇）

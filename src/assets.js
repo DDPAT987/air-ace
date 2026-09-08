@@ -36,6 +36,24 @@ const REGISTRY = {
     targetLength: 19.43,         // F-15C 全长约 19.43m
     fallbackColor: 0x9aa4ad,
   },
+  pl12: {
+    fbx: 'public/models/pl12/PL12.fbx',
+    mtl: null,
+    targetLength: 3.9,           // PL-12 全长约 3.9m
+    fallbackColor: 0xd8dde2,
+  },
+  pl8: {
+    fbx: 'public/models/pl8/PL8B.fbx',
+    mtl: null,
+    targetLength: 3.0,           // PL-8B 全长约 3.0m
+    fallbackColor: 0xcfd6db,
+  },
+  r73: {
+    fbx: 'public/models/r73/R73.fbx',
+    mtl: null,
+    targetLength: 2.9,           // R-73 全长约 2.9m
+    fallbackColor: 0xd8dde2,
+  },
   aim120: {
     obj: 'public/models/aim120/us_aim_120a_default.obj',
     mtl: 'public/models/aim120/us_aim_120a_default.mtl',
@@ -98,17 +116,22 @@ export class ModelLibrary {
     if (this._skipResolve) this._skipResolve();
   }
 
-  async loadAll(onProgress = () => {}) {
-    const names = Object.keys(REGISTRY);
-    let i = 0;
-    for (const name of names) {
+  // 并行加载（4 路）+ 优先级排序：玩家机体与其导弹最先，开局等待时间减半
+  async loadAll(onProgress = () => {}, priorityNames = []) {
+    const all = Object.keys(REGISTRY);
+    const names = [...all].sort((a, b) => {
+      const pa = priorityNames.indexOf(a), pb = priorityNames.indexOf(b);
+      return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
+    });
+    let done = 0;
+    const queue = [...names];
+    const loadOne = async (name) => {
       if (this._skipRequested) {
         this.models[name] = this.models[name] ?? null;
-        i++;
-        onProgress(i / names.length, `跳过 ${name} (${i}/${names.length})`);
-        continue;
+        done++;
+        onProgress(done / names.length, `跳过 ${name} (${done}/${names.length})`);
+        return;
       }
-      // 每个模型最多 2 次尝试，单次 45s 超时；期间可被 skipRemaining() 打断
       let ok = false;
       for (let attempt = 1; attempt <= 2 && !ok && !this._skipRequested; attempt++) {
         try {
@@ -123,9 +146,17 @@ export class ModelLibrary {
         this.models[name] = null;
         if (!this._skipRequested) console.warn(`[assets] ${name} 使用占位模型`);
       }
-      i++;
-      onProgress(i / names.length, `模型 ${name} (${i}/${names.length})`);
-    }
+      done++;
+      onProgress(done / names.length, `模型 ${name} (${done}/${names.length})`);
+    };
+    const worker = async () => {
+      while (queue.length) {
+        const name = queue.shift();
+        await loadOne(name);
+        if (this._skipRequested) continue;   // skip 后快速清空队列
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
     return this;
   }
 
@@ -232,7 +263,7 @@ export class ModelLibrary {
   }
 
   makeMissile(kind) {
-    const key = ['aim120', 'r77', 'aim9'].includes(kind) ? kind : 'aim120';
+    const key = ['aim120', 'r77', 'aim9', 'pl12', 'pl8', 'r73'].includes(kind) ? kind : 'aim120';
     const proto = this.models[key] || this.models.aim120;
     if (proto) {
       // 真实弹体模型（克隆后直接写 quaternion 应用自动定向结果，理由同 makeJet）
@@ -262,6 +293,8 @@ const NOZZLE_LAYOUT = {
   f16:   { nozzles: [{ x: 0.0, y: -0.22 }], r: 0.52, len: 2.6 },
   mig29: { nozzles: [{ x: -0.62, y: 0.02 }, { x: 0.62, y: 0.02 }], r: 0.44, len: 2.4 },
   su30:  { nozzles: [{ x: -0.9, y: -0.54 }, { x: 0.9, y: -0.54 }], r: 0.5, len: 2.8 },
+  j10c:  { nozzles: [{ x: 0.0, y: -0.25 }], r: 0.5, len: 2.6 },            // AL-31FN 单发
+  f15c:  { nozzles: [{ x: -0.68, y: 0.0 }, { x: 0.68, y: 0.0 }], r: 0.5, len: 2.8 },  // F100 双发大间距
 };
 
 // 给飞机加尾喷特效挂点（升级版：外焰锥 + 内焰芯 + 光晕 sprite；userData.nozzles 数组协议）

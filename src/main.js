@@ -10,6 +10,7 @@ import { ModelLibrary } from './assets.js';
 import { Settings } from './settings.js';
 import { Menu } from './menu.js';
 import { GameAudio } from './audio.js';
+import { AIRCRAFT } from './config.js';
 
 const overlay = document.getElementById('overlay');
 const loadBar = document.getElementById('loadbar');
@@ -106,8 +107,11 @@ const modelLib = new ModelLibrary();
 
 const menu = new Menu({
   onStart: () => {
-    // 首次开始：按当前设置生成玩家（boot 不再预生成）
-    if (!game.player) { game.start(); menu.resetStartLabel(); }
+    // 首次开始 / 返回主菜单后更换了机体 → 按当前设置重建（修：旧机体残留）
+    if (!game.player || game._playerSpecKey !== Settings.data.aircraft) {
+      game.reset();
+      menu.resetStartLabel();
+    }
     audio.init(); audio.resume();
     audio.startBGM(); audio.startEngine();
     audio.setPausedMuted(false);
@@ -307,7 +311,13 @@ async function boot() {
         loadMsg.appendChild(a);
       }, 10000);
       try {
-        await modelLib.loadAll((f, m) => setProgress(0.6 + f * 0.35, m));
+        // 优先加载：玩家机体 → 该机型导弹 → 首波敌机常用机型，其余后台并行
+        const acKey = Settings.data.aircraft in AIRCRAFT ? Settings.data.aircraft : 'player_f16';
+        const jetKey = { player_f16: 'f16', player_j10c: 'j10c', enemy_mig29: 'mig29', enemy_f15c: 'f15c', enemy_su30: 'su30' }[acKey] ?? 'f16';
+        const lo = AIRCRAFT[acKey]?.loadout ?? { mr: 'aim120', ir: 'aim9' };
+        const mslKey = { aim120: 'aim120', pl12a: 'pl12', r77: 'r77', aim9: 'aim9', pl8: 'pl8', r73: 'r73' };
+        const priority = [jetKey, mslKey[lo.mr], mslKey[lo.ir], 'mig29', 'su30'];
+        await modelLib.loadAll((f, m) => setProgress(0.6 + f * 0.35, m), priority);
       } finally { clearTimeout(skipTimer); }
       game.modelLib = modelLib;
     } catch (err) {
