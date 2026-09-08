@@ -320,6 +320,7 @@ async function boot() {
         await modelLib.loadAll((f, m) => setProgress(0.6 + f * 0.35, m), priority);
       } finally { clearTimeout(skipTimer); }
       game.modelLib = modelLib;
+      modelLib.startBackgroundRetry();
     } catch (err) {
       console.warn('[boot] 模型库加载失败，使用占位网格:', err.message);
     }

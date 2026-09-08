@@ -110,6 +110,22 @@ export class ModelLibrary {
     this.models = {};
   }
 
+  // 后台重试：加载失败/被跳过的模型在游戏运行期间静默重试，成功后自动替换占位
+  startBackgroundRetry(onLoaded = () => {}) {
+    if (this._retryTimer) return;
+    this._retryTimer = setInterval(async () => {
+      const missing = Object.keys(REGISTRY).filter(k => !this.models[k]);
+      if (!missing.length) { clearInterval(this._retryTimer); this._retryTimer = null; return; }
+      for (const name of missing) {
+        try {
+          this.models[name] = await this._loadWithTimeout(REGISTRY[name], 60000);
+          console.log(`[assets] ${name} 后台重试成功 ✓`);
+          onLoaded(name);
+        } catch { /* 继续等下轮 */ }
+      }
+    }, 20000);
+  }
+
   // 外部调用：跳过剩余模型（网络僵死时让玩家直接进游戏，用占位网格）
   skipRemaining() {
     this._skipRequested = true;

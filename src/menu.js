@@ -22,11 +22,11 @@ const KEY_LABELS = [
 ];
 
 const FLYABLE = [
-  ['player_f16', 'F-16CM', '轻战 · 高滚转率，敏捷均衡'],
-  ['player_j10c', '歼-10C', '中式轻战 · 大迎角，能量灵活'],
-  ['enemy_mig29', 'MiG-29M', '推重比高 · 加速凶悍'],
-  ['enemy_f15c', 'F-15C', '鹰 · 双发重战，高速血厚'],
-  ['enemy_su30', 'Su-30SM2', '重型 · 血厚弹多，惯性大'],
+  ['player_f16', 'F-16CM', '轻战 · 高滚转率，敏捷均衡', 'AIM-120C + AIM-9M'],
+  ['player_j10c', '歼-10C', '中式轻战 · 大迎角，能量灵活', 'PL-12A + PL-8'],
+  ['enemy_mig29', 'MiG-29M', '推重比高 · 加速凶悍', 'R-77-1 + R-73'],
+  ['enemy_f15c', 'F-15C', '鹰 · 双发重战，高速血厚', 'AIM-120C + AIM-9M'],
+  ['enemy_su30', 'Su-30SM2', '重型 · 血厚弹多，惯性大', 'R-77-1 + R-73'],
 ];
 
 const SLIDERS = [
@@ -36,8 +36,8 @@ const SLIDERS = [
   ['alphaStall', '失速迎角', 0, 26, 1, (v) => v > 0 ? `${v}°` : '默认'],
   ['maxG', '最大正过载', 4, 17, 1, (v) => `${v}G`, (base) => base.overrides.maxG > 0 ? base.overrides.maxG : 9],
   ['minG', '最大负过载', -8, -1, 1, (v) => `${v}G`, (base) => base.overrides.minG < 0 ? base.overrides.minG : -3],
-  ['missiles', '中距弹数量（按机型：AIM-120 / PL-12A / R-77-1）', 0, 8, 1, (v) => v > 0 ? String(v) : '默认'],
-  ['aim9', '近距弹数量（按机型：AIM-9 / PL-8 / R-73）', 0, 6, 1, (v) => v > 0 ? String(v) : '默认'],
+  ['missiles', '{MR} 数量', 0, 8, 1, (v) => v > 0 ? String(v) : '默认'],
+  ['aim9', '{IR} 数量', 0, 6, 1, (v) => v > 0 ? String(v) : '默认'],
   ['gunRounds', '航炮弹量', 0, 800, 10, (v) => v > 0 ? String(v) : `默认${WEAPONS.gun.rounds}`],
   ['fuelMul', '燃油倍率', 0.5, 2.0, 0.1, (v) => `×${v.toFixed(1)}`],
 ];
@@ -129,12 +129,13 @@ export class Menu {
   _buildAircraft() {
     const grid = document.getElementById('acgrid');
     grid.innerHTML = '';
-    for (const [key, name, desc] of FLYABLE) {
+    for (const [key, name, desc, loadoutTxt] of FLYABLE) {
       const spec = AIRCRAFT[key];
       const card = document.createElement('div');
       card.className = 'accard' + (this.data.aircraft === key ? ' selected' : '');
       card.innerHTML = `<div class="acname">${name}</div>` +
         `<div>${desc}</div>` +
+        `<div style="color:#6fe3ff">挂载 ${loadoutTxt}</div>` +
         `<div>推力 ${Math.round(spec.thrustMax / 1000)}kN · 重量 ${(spec.mass / 1000).toFixed(1)}t</div>` +
         `<div>翼面 ${spec.wingArea}m² · 失速 ${spec.alphaStall}°</div>` +
         `<div>滚转 ${Math.round(spec.rollRateMax * 57.3)}°/s</div>`;
@@ -148,11 +149,14 @@ export class Menu {
 
     const box = document.getElementById('acsliders');
     box.innerHTML = '';
+    // 滑条标签占位替换：{MR}/{IR} → 当前所选机型的中距/近距弹名
+    const acKey = this.data.aircraft in AIRCRAFT ? this.data.aircraft : 'player_f16';
+    const lo = AIRCRAFT[acKey]?.loadout ?? { mr: 'aim120', ir: 'aim9' };
     for (const [prop, label, min, max, step, fmt, initFn] of SLIDERS) {
       const row = document.createElement('div');
       row.className = 'slider-row';
       const lab = document.createElement('label');
-      lab.textContent = label;
+      lab.textContent = label.replace('{MR}', WEAPONS[lo.mr]?.name ?? '中距弹').replace('{IR}', WEAPONS[lo.ir]?.name ?? '近距弹');
       const range = document.createElement('input');
       range.type = 'range'; range.min = min; range.max = max; range.step = step;
       const stored = this.data.overrides[prop];

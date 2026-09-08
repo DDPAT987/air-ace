@@ -128,9 +128,11 @@ export class Aircraft {
     this.telemetry.alt = this.position.y;
     this.telemetry.alpha = alphaDeg * Math.sign(alpha || 1);
     this.telemetry.beta = beta * 180 / Math.PI;
-    // 体感 G：路径弯曲角速度 × V / g
+    // 体感 G：路径弯曲角速度 × V / g；符号随迎角（拉=正 G，推=负 G）
     const pathRate = alignRate;
-    this.telemetry.gLoad = 1 + (newSpeed * pathRate * Math.cos(alpha * 0.5)) / G * 0.9;
+    const gSign = (alpha >= 0) ? 1 : -1;
+    const pathG = (newSpeed * pathRate * Math.cos(alpha * 0.5)) / G * 0.9;
+    this.telemetry.gLoad = 1 + gSign * pathG;
     this.telemetry.stall = this.fcs.telemetry.stall;
     this.telemetry.stallWarn = this.fcs.telemetry.stallWarn;
     this.telemetry.throttle = this.throttle;
